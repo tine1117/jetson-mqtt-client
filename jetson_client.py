@@ -10,9 +10,9 @@ BROKER_PORT = 1883              #브로커 서버 포트
 MQTT_USERNAME = "FIRST"         #MQTT USER 이름
 MQTT_PASSWORD = "1234"          #MQTT 비밀번호 -> 추후 보안을 위해 암호화 파일 관리
 
+DISC_FORMAT     = "edgi/{}/disconnect"
 
-
-def generate_data(): #온도 임시 생성 코드
+def get_sample_generate(): #온도 임시 생성 코드
     return {
         "temperature" : round(random.uniform(30, 90), 2)
     }
@@ -24,6 +24,10 @@ def on_connect(client, userdata, flags, rc):
          print("[Socket-Error] Login failed", flush=True)
     else:
         print("[Socket-Error] Error : {rc}", flush=True)
+
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        print(f"[WARN] Unexpected disconnect rc={rc}", flush=True)
 
 
 """
@@ -44,7 +48,9 @@ def main():
 
     client = mqtt.Client(client_id=str(edgi_id)) #인스턴스 생성
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+
     client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
 
     will_topic = f"edgi/{edgi_id}/disconnect" #연결 해제 토픽
     will_payload = json.dumps({"edgi_id": edgi_id})
@@ -59,18 +65,18 @@ def main():
                 "edgi_id" : edgi_id,
                 "ip" : ip,
                 "timestamp" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "data" : generate_data()
+                "data" :  get_sample_generate()
             }
 
             client.publish(topic, json.dumps(payload))
-            print(f"[Send] data : {payload}", flush=True)
+            print(f"[INFO] sendData : {payload}", flush=True)
             time.sleep(5) #5초에 한번씩 전송
-    except KeyboardInterrupt:
-        print("Exit")
-    finally:
-        disconnect_payload = json.dumps({"edgi_id": edgi_id})
-        disconnect_topic = f"edgi/{edgi_id}/disconnect"
-        client.publish(disconnect_topic, disconnect_payload, qos=1, retain=False)
+    except KeyboardInterrupt: #(ctrl + c) 프로그램 종료
+        print("[INFO] Exit")
+
+    finally: #클라이언트 종료
+        disc = json.dumps({"edgi_id": edgi_id, "reason": "normal"}, ensure_ascii=False, separators=(",",":"))
+        client.publish(DISC_FORMAT.format(edgi_id), disc, qos=QOS, retain=False)
         time.sleep(1)
 
         client.loop_stop()
