@@ -10,8 +10,7 @@ BROKER_PORT = 1883              #브로커 서버 포트
 MQTT_USERNAME = "FIRST"         #MQTT USER 이름
 MQTT_PASSWORD = "1234"          #MQTT 비밀번호 -> 추후 보안을 위해 암호화 파일 관리
 
-def get_ip():
-    return socket.gethostbyname(socket.gethostname())
+
 
 def generate_data(): #온도 임시 생성 코드
     return {
@@ -20,28 +19,36 @@ def generate_data(): #온도 임시 생성 코드
 
 def on_connect(client, userdata, flags, rc):
     if rc==0:
-        print("[Socket] connection successful !", flush=True)
+        print("[Socket] Connection successful !", flush=True)
     elif rc == 5:
-         print("[Socket-Error] 로그인 실패, 비밀번호 확인", flush=True)
+         print("[Socket-Error] Login failed", flush=True)
     else:
-        print("[Socket-Error] 기타 에러코드 {rc}", flush=True)
+        print("[Socket-Error] Error : {rc}", flush=True)
 
 
-
+"""
+[Qos]
+Qos 0 : 손실 가능, 중복 없음
+Qos 1 : 최소 1회 전달, 중복 가능
+Qos 2 : 정확히 1회, 중복, 손실 방지
+"""
 
 def main():
-    print("[#] Client Start !")
     edgi_id = jetson_info.get_id()
-    ip = get_ip()
-    topic = "edgi/{edgi_id}/data"
+    ip = jetson_info.get_ip()
 
-    client = mqtt.Client(client_id=str(edgi_id))
+    print("[#] Start Jetson MQTT Client")
+    print(f"Connect {BROKER_IP}:{BROKER_PORT} as {edgi_id} ...")
+
+    topic = f"edgi/{edgi_id}/data"
+
+    client = mqtt.Client(client_id=str(edgi_id)) #인스턴스 생성
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
 
     will_topic = f"edgi/{edgi_id}/disconnect" #연결 해제 토픽
     will_payload = json.dumps({"edgi_id": edgi_id})
-    client.will_set(will_topic, payload=will_payload, qos=1, retain=False)
+    client.will_set(will_topic, payload=will_payload, qos=1, retain=False) #LWT(유언 메세지) 설정
 
     client.connect(BROKER_IP, BROKER_PORT, keepalive=60) #Keepalive
     client.loop_start()

@@ -3,7 +3,7 @@ import os, uuid, hashlib, socket
 #DEFAULT SETTING
 DEFAULT_ID = "edgi-"
 
-#GET CLIENT ID - 고유 아이디를 불러옵니다.
+#GET CLIENT ID - 고유 아이디 생성 (리눅스, 윈도우)
 def get_id() -> str:
     try:
         with open("/etc/machine-id", "r") as f:
@@ -25,12 +25,14 @@ def get_id() -> str:
     except Exception:
         pass
 
-    #MAC
+    #MAC 예비
     try:
         return DEFAULT_ID + _convert(f"{uuid.getnode():012x}")
     except Exception:
         return DEFAULT_ID + str(00000)
-
+    
+def get_ip():
+    return socket.gethostbyname(socket.gethostname())
 
 def _convert(temp : str) -> str: #SHA-> INT(16) -> %100000 -> split:5
     temp = "".join(temp.split())
