@@ -5,6 +5,9 @@ import random, sys, io, json, os, uuid, time, socket
 import jetson_info
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+
+EDGI_RAND_ID = jetson_info.get_rand_id()
+
 BROKER_IP = "192.168.35.162"    #브로커 서버 아이피 -> 추후 도메인 설정
 BROKER_PORT = 1883              #브로커 서버 포트
 MQTT_USERNAME = "FIRST"         #MQTT USER 이름
@@ -38,7 +41,7 @@ Qos 2 : 정확히 1회, 중복, 손실 방지
 """
 
 def main():
-    edgi_id = jetson_info.get_rand_id()
+    edgi_id = EDGI_RAND_ID
     ip = jetson_info.get_ip()
 
     print("[#] Start Jetson MQTT Client")
