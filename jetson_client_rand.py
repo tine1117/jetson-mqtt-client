@@ -38,7 +38,7 @@ Qos 2 : 정확히 1회, 중복, 손실 방지
 """
 
 def main():
-    edgi_id = jetson_info.get_id()
+    edgi_id = jetson_info.get_rand_id()
     ip = jetson_info.get_ip()
 
     print("[#] Start Jetson MQTT Client")

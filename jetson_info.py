@@ -1,4 +1,4 @@
-import os, uuid, hashlib, socket
+import os, uuid, hashlib, socket, secrets
 
 #DEFAULT SETTING
 DEFAULT_ID = "edgi-"
@@ -31,6 +31,10 @@ def get_id() -> str:
     except Exception:
         return DEFAULT_ID + str(00000)
     
+def get_rand_id() -> str:
+    n = secrets.randbelow(100000)
+    return f"{DEFAULT_ID}{n:05d}"
+
 def get_ip():
     return socket.gethostbyname(socket.gethostname())
 
